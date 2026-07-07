@@ -48,10 +48,6 @@
 
 [NSFW-Spiders](https://github.com/CatVodSpider-GM/NSFW-Spiders)
 
-## 开发文档
-
-[爬虫实现源码](../CatVodSpider-WebMonkey/)
-
 ## 项目参考
 - [warren-bank/Android-WebMonkey](https://github.com/warren-bank/Android-WebMonkey)
 - [wbayer/webview-gm](https://github.com/wbayer/webview-gm)
