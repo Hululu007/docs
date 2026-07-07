@@ -211,6 +211,46 @@ detailContent(List<String> ids)
 | »»`vod_play_url` | `string` | 播放链接 | 多个可选分集通过 `#` 分隔，分集标题和链接通过 `$` 分隔 | 无 |
 | »»`action` | `string` | 未知 | | 无 |
 
+#### GM 爬虫扩展字段（vod_play_data）
+
+GM 爬虫通过自定义的 `vod_play_data` 字段传递播放源信息，字段结构如下：
+
+```json
+{
+  "list": [{
+    "vod_id": "12345",
+    "vod_play_data": [
+      {
+        "from": "线路一",
+        "media": [
+          {
+            "name": "正片",
+            "type": "finalUrl",
+            "ext": {
+              "url": "https://cdn.example.com/video.m3u8",
+              "header": {"User-Agent": "...", "Referer": "..."},
+              "replace": {"parse": "1"}
+            }
+          }
+        ]
+      }
+    ]
+  }]
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `from` | `string` | 播放来源名称（对应 vod_play_from 中的一项） |
+| `media[].name` | `string` | 集数名称 |
+| `media[].type` | `string` | 播放类型：`finalUrl`（直接播放）、`match`（URL 嗅探）、`webview`（WebView 加载）、`file`（本地文件） |
+| `media[].ext.url` | `string` | 播放/加载地址 |
+| `media[].ext.header` | `object` | HTTP 请求头 |
+| `media[].ext.replace` | `object` | 可选字段透传（如 `parse`、`format`） |
+| `media[].ext.file` | `string` | `type=file` 时的文件内容（写入本地缓存） |
+
+> 非 `detailContent` 的其他方法（home/category/search/player）直接透传脚本的原始 JSON 结果。
+
 特殊内链格式
 
 ```
