@@ -6,7 +6,7 @@
 // @author       Luomo
 // @match        https://www.template.com/*
 // @require      https://cdn.jsdelivr.net/gh/CatVodSpider-GM/Spiders-Lib@main/lib/browser-extension-url-match-1.2.0.min.js
-// @require      https://cdn.jsdelivr.net/gh/CatVodSpider-GM/Spiders-Lib@main/lib/ajaxhook-3.0.3.min.js
+// @require      https://cdn.jsdelivr.net/npm/ajax-hook@3.0.3/dist/ajaxhook.umd.min.js
 // @grant        unsafeWindow
 // @run-at       document-start
 // ==/UserScript==
