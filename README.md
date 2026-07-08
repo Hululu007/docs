@@ -36,6 +36,8 @@
 
 [内置JSBridge接口](./docs/内置JSBridge接口.md)
 
+[从零编写用户脚本指南](./docs/从零编写用户脚本指南.md) ⭐ 推荐首先阅读
+
 [常用实现方案介绍(附带模版)](./docs/常用实现方案介绍(附带模版).md)
 
 [参考资料及Javascript类库推荐](./docs/参考资料及Javascript类库推荐.md)
