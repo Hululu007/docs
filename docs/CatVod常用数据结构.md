@@ -208,7 +208,7 @@ detailContent(List<String> ids)
 | »»`vod_director` | `string` | 视频导演 | 支持特殊内链格式 但是无法通过遥控器选中 | 有 |
 | »»`vod_content` | `string` | 视频简介 | 支持特殊内链格式 但是无法通过遥控器选中 | 有 |
 | »»`vod_play_from` | `string` | 播放TAB | | 有 |
-| »»`vod_play_url` | `string` | 播放链接 | 多个可选分集通过 `#` 分隔，分集标题和链接通过 `$` 分隔 | 无 |
+| »»`vod_play_url` | `string` | 播放链接 | 多个可选分集通过 `#` 分隔，分集标题和链接通过 `$` 分隔。GM 爬虫会在内部把 `vod_play_data` 序列化后 base64 编码写入该字段 | 无 |
 | »»`action` | `string` | 未知 | | 无 |
 
 #### GM 爬虫扩展字段（vod_play_data）
@@ -225,7 +225,7 @@ GM 爬虫通过自定义的 `vod_play_data` 字段传递播放源信息，字段
         "media": [
           {
             "name": "正片",
-            "type": "finalUrl",
+            "type": "direct",
             "ext": {
               "url": "https://cdn.example.com/video.m3u8",
               "header": {"User-Agent": "...", "Referer": "..."},
@@ -243,13 +243,15 @@ GM 爬虫通过自定义的 `vod_play_data` 字段传递播放源信息，字段
 |------|------|------|
 | `from` | `string` | 播放来源名称（对应 vod_play_from 中的一项） |
 | `media[].name` | `string` | 集数名称 |
-| `media[].type` | `string` | 播放类型：`finalUrl`（直接播放）、`match`（URL 嗅探）、`webview`（WebView 加载）、`file`（本地文件） |
-| `media[].ext.url` | `string` | 播放/加载地址 |
+| `media[].type` | `string` | 只有两个值有特殊含义：`direct`（直接播放，不经过 WebView）、`match`（打开播放页后等待 `playUrlMatch` 嗅探）。**其余任何值（包括缺省、`webview`）都走 WebView**：加载 `ext.url`，由脚本的 `playerContent()` 返回结果 |
+| `media[].ext.url` | `string` | 播放地址（`direct`）或播放页地址（其他类型）。非 `direct` 时必填，缺失会抛 `webview 缺少 ext.url` |
 | `media[].ext.header` | `object` | HTTP 请求头 |
-| `media[].ext.replace` | `object` | 可选字段透传（如 `parse`、`format`） |
-| `media[].ext.file` | `string` | `type=file` 时的文件内容（写入本地缓存） |
+| `media[].ext.file` | `string` | 本地文件内容，写入缓存后作为播放地址。**与 `type` 无关**：构建播放结果时只判断 `ext.file` 是否有值 |
+| `media[].ext.replace` | `object` | 透传到播放结果：`parse`（整数）与 `format`（字符串） |
 
-> 非 `detailContent` 的其他方法（home/category/search/player）直接透传脚本的原始 JSON 结果。
+> 所谓 `finalUrl` / `file` / `webview` 都是脚本侧的习惯叫法，GM 不会按这些名字分支；写成 `finalUrl` 并不会直接播放，而是照样走 WebView。直接播放请写 `type: "direct"`。
+
+> `homeContent` / `categoryContent` / `searchContent` 直接透传脚本返回的 JSON。`playerContent` 的结果会被转换成播放结果（`url` / `header` / `subs`），其中 `ext.replace.parse`、`ext.replace.format` 透传给 `Result`。
 
 特殊内链格式
 

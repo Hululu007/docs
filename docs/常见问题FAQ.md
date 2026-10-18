@@ -5,9 +5,9 @@
 ### Q: 脚本在 Chrome 中正常工作，盒子上返回空？
 
 A: 常见原因：
-1. **页面有 Cloudflare 验证**：盒子 WebView 可能被拦截。检查页面是否有 `#cf-wrapper` 元素，在脚本入口处检测并 toast 提示。
-2. **blockList 误伤**：检查 blockList 是否屏蔽了关键 JS 文件。尝试临时清空 blockList 对比测试。
-3. **`$(function(){})` 触发时机**：如果页面是 SPA（单页应用），DOM 就绪时数据可能还未渲染。尝试加 `setTimeout` 延迟执行。
+1. **页面有 Cloudflare 验证**：`cfAutoHandle` 默认 `true`，检测到挑战会自动弹出 WebView 供用户验证，脚本无需自己弹窗。注意**不要在挑战文档里执行 `evaluateJavascript`**（DOM 复核、轮询都不行），否则会打断 CF 采集信号，表现为「验证通过但仍返回 403」。用 `"logLevel": "debug"` 观察 `CF_ALLOW:` 日志确认是否进入了挑战流程。
+2. **blockList 误伤**：检查 blockList 是否屏蔽了关键 JS 文件。尝试临时清空 blockList 对比测试。CSS/字体由 `blockCssAndFont` 独立处理，不要混在 blockList 里。
+3. **执行时机**：省略 `@run-at` 时脚本在 `window load` 后才注入；如果页面是 SPA，数据可能仍未渲染。改用 `@run-at document-start` / `document-end`，或加 `setTimeout` 轮询等待。
 
 ### Q: 如何在 Chrome DevTools 中调试特定的爬虫方法？
 
@@ -39,6 +39,8 @@ $('a[href*="vod/"]').each(function () {
 
 A: 不会。GM 爬虫使用无头 WebView，页面对用户不可见，CSS 样式完全不需要。屏蔽 CSS 可以减少大量网络请求，显著提升加载速度。
 
+不过专用开关更省事：`blockCssAndFont`（默认 `true`）已经统一屏蔽 CSS 和字体，且挑战期间会自动放行；因此不要再把 `*.css*` / `*.woff2*` 写进 `blockList`。
+
 ### Q: `pagecount` 返回什么值最合适？
 
 A: 如果存在"下一页"链接 → 返回 `9999`，让壳应用持续翻页直到返回空列表后自动停止。如果没有"下一页" → 返回当前页码或 `1`。
@@ -60,12 +62,14 @@ A: 如果页面自带 jQuery，不要在 `@require` 中再次引入。直接使�
 
 ### Q: 详情页 `vod_play_url` 格式是什么？
 
-A: 格式为 `分集标题$播放链接#分集标题2$播放链接2`。
-- 多集用 `#` 分隔
-- 标题和链接用 `$` 分隔
-- 单集示例：`默认线路$https://example.com/video.m3u8`
+A: 这是 CatVod 的标准字段，但在 GM 爬虫里**推荐直接返回 `vod_play_data`**，不要手写 `vod_play_url`——GM 会把 `vod_play_data` 序列化并 base64 编码后自动写进 `vod_play_url`。
 
-多条播放线路通过 `$$$` 分隔（对应 `vod_play_from` 中的多个来源）。
+GM 生成的 `vod_play_url` 形态是 `分集标题$base64(PlayMedium JSON)`：
+- 线路之间仍用 `$$$` 分隔（对应 `vod_play_from`）
+- 分集之间用 `#` 分隔
+- `$` 之后是 base64，不是裸 URL
+
+兼容说明：脚本返回旧式 `分集标题$播放链接`（不含 base64）仍可识别，会被当作 `type: "direct"` 处理。但推荐用 `vod_play_data`，可显式控制 `type`、`ext.url`、`ext.header` 等字段。
 
 ### Q: 搜索页的分页参数在哪？
 
@@ -82,14 +86,14 @@ A: `homeContent` 返回的 `filters` 中，用户选择的 `v` 值会自动传�
 ### Q: 盒子上看不到调试信息？
 
 A: 三种方式：
-1. 设置 `"debug": true`，WebView 变为可见，可观察加载状态
-2. Chrome `chrome://inspect/#devices` 远程调试
-3. `adb logcat -s GMSpider` 查看 Java 层日志
+1. 设置 `"logLevel": "debug"`，`adb logcat -s GMSpider` 可见 `MATCH:`、`BLOCK:`、`ALLOW:`、`CF_ALLOW:` 等详细日志
+2. 设置 `"remoteDebug": true`，用 Chrome `chrome://inspect/#devices` 调试（仅开启调试并延迟销毁 WebView，**不会**让 WebView 变为可见）
+3. 需要让 WebView 真正可见时，只能在脚本里调用 `GmSpiderInject.ShowWebview()`
 
 ### Q: 脚本太大导致加载慢？
 
 A: 优化建议：
-1. 开启 `blockNetworkImage: true`
+1. 保持 `blockNetworkImage: true`（默认即开）
 2. 完善 `blockList` 屏蔽不必要的请求
 3. 减少 `@require` 外部依赖，优先使用页面自带库
 4. 移除 `console.log` 调试语句

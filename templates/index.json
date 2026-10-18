@@ -1,5 +1,5 @@
 {
-  "spider": "https://ghp.ci/https://raw.githubusercontent.com/CatVodSpider-GM/Spiders-Lib/main/jar/GM.jar",
+  "spider": "./Spiders-Lib/GM.jar;md5;<md5>",
   "sites": [
     {
       "key": "template",
@@ -14,27 +14,28 @@
       "api": "csp_GM",
       "ext": {
         "userScript": "./userScripts/template.user.js",
-        "debug": false,
+        "remoteDebug": false,
+        "logLevel": "info",
+        "cfAutoHandle": true,
+        "cfVirtualMouse": true,
         "webViewSettings": {
-          "blockNetworkImage": false,
+          "blockNetworkImage": true,
+          "blockCssAndFont": true,
+          "webViewTimeout": 60000,
           "blockList": [
-            "*.png*",
-            "*.mp3*",
-            "*.css*"
+            "https://*.adsco.re/*"
           ]
         },
+        "playUrlMatch": ["https://*/*.m3u8*"],
         "spider": {
           "homeContent": {
             "loadUrl": "https://www.template.com/"
           },
           "categoryContent": {
-            "loadUrl": "https://www.template.com/${tid}?page=${pg:-1}&filter=${filter:-}&sort=${sort:-}"
+            "loadUrl": "https://www.template.com/${tid}?page=${pg:-1}&sort=${sort:-}"
           },
           "detailContent": {
             "loadUrl": "https://www.template.com/${id}"
-          },
-          "playerContent": {
-            "loadUrl": "${id}"
           },
           "searchContent": {
             "loadUrl": "https://www.template.com/search?key=${key}&page=${pg:-1}"

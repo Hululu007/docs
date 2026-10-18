@@ -46,12 +46,21 @@ if (typeof GmSpiderInject !== 'undefined') {
 }
 ```
 
-### ShowWebview / HideWebview —— 调试用
+### ShowWebview / HideWebview —— 控制 WebView 可见性
 
 ```javascript
-GmSpiderInject.ShowWebview()   // 显示 WebView（debug 模式有效）
+GmSpiderInject.ShowWebview()   // 显示 WebView
 GmSpiderInject.HideWebview()   // 隐藏 WebView
 ```
+
+显示行为与 `remoteDebug` 无关：`remoteDebug` 只开启 Chrome 远程调试并延迟销毁 WebView，**不会**让 WebView 可见。
+
+> Cloudflare 挑战流程会自动显示 WebView，无需脚本调用 `ShowWebview()`。
+> **不要在挑战文档里执行 `evaluateJavascript`**（包括用脚本去探测/轮询 DOM），否则会打断 CF 采集信号。
+
+### 挑战期间的 SetSpiderResult
+
+处于**已确认**的 Cloudflare 挑战期间时，`SetSpiderResult` 的结果会被丢弃（本次调用最终按超时结束）。应当在用户通过验证、页面回到正式文档后再返回结果；通行 Cookie 会保留给下一次调用。
 
 ## WebViewWM（Greasemonkey 桥接扩展）
 
